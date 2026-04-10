@@ -174,6 +174,8 @@ class MaskBuilder:
                 y2 = (cy + bh / 2) * sy
 
                 # clamp to feature map bounds
+                # x1i / y1i: inclusive start index → clamp to [0, feat_w-1] / [0, feat_h-1]
+                # x2i / y2i: exclusive end index   → clamp to [0, feat_w]   / [0, feat_h]
                 x1i = max(0, min(int(x1), feat_w - 1))
                 y1i = max(0, min(int(y1), feat_h - 1))
                 x2i = max(0, min(math.ceil(x2), feat_w))

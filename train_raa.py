@@ -205,9 +205,17 @@ def train(opt, device):
     print(colorstr('RAA Module: ') + f'{sum(p.numel() for p in raa_module.parameters()):,} parameters')
 
     # ---- 优化器 -----------------------------------------------------------
-    all_params = list(model.parameters()) + list(raa_module.parameters())
-    optimizer  = smart_optimizer(model, opt.optimizer, hyp['lr0'], hyp['momentum'], hyp['weight_decay'])
-    optimizer.add_param_group({'params': list(raa_module.parameters()), 'lr': hyp['lr0']})
+    # 将 RAA 模块参数与模型参数一起传入 smart_optimizer，
+    # 以确保 weight decay 等参数分组逻辑对 RAA 参数同样生效。
+    # smart_optimizer 内部会按 bias/BN/weight 分组；
+    # 此处采用手动分组方式以兼容不同版本的 yolov5 辅助函数。
+    optimizer = smart_optimizer(model, opt.optimizer, hyp['lr0'], hyp['momentum'], hyp['weight_decay'])
+
+    # RAA 参数：非 bias/BN 参数加 weight_decay，其余不加
+    raa_wd_params    = [p for name, p in raa_module.named_parameters() if 'bias' not in name and p.ndim != 1]
+    raa_no_wd_params = [p for name, p in raa_module.named_parameters() if 'bias' in name or p.ndim == 1]
+    optimizer.add_param_group({'params': raa_wd_params,    'lr': hyp['lr0'], 'weight_decay': hyp['weight_decay']})
+    optimizer.add_param_group({'params': raa_no_wd_params, 'lr': hyp['lr0'], 'weight_decay': 0.0})
 
     # ---- 学习率调度器 -----------------------------------------------------
     lf = lambda x: ((1 - math.cos(x * math.pi / opt.epochs)) / 2) * (hyp['lrf'] - 1) + 1
@@ -242,9 +250,10 @@ def train(opt, device):
     )
 
     # ---- Hook：捕获 P3/P4/P5 特征图 ------------------------------------
-    # YOLOv5 模型中，Detect 层之前的输出通常在 model.model[-1] 的输入
-    # 这里假设最后 3 层 (index -4, -3, -2) 对应 P3/P4/P5 的 upsample 输出
-    # 实际索引需根据具体模型结构调整
+    # YOLOv5 Neck（PAFPN）的输出通常对应 Detect 层之前的若干 Conv 层。
+    # 层索引 [-4, -3, -2] 是示意值，不同 YOLOv5 变体（s/m/l/x）的实际
+    # 索引可能不同。集成前请运行 `print(model)` 确认正确的层编号。
+    # 建议查找 model.model 中最后三个 Conv/C3/SPPF 类型层的索引。
     detect_layer = model.model[-1]
     hooks = []
     feature_outputs = [None, None, None]
@@ -295,7 +304,7 @@ def train(opt, device):
             # ---- 反向传播 ------------------------------------------------
             scaler.scale(loss).backward()
 
-            if ni % opt.accumulate == 0:
+            if (ni + 1) % opt.accumulate == 0:
                 scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(all_params, max_norm=10.0)
                 scaler.step(optimizer)

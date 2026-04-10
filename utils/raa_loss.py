@@ -5,7 +5,9 @@ RAA Loss Functions for YOLOv5
   1. AttentionSupervisionLoss  —— 注意力监督损失 L_att
   2. MultiScaleConsistencyLoss —— 多尺度一致性损失 L_consistency
   3. TargetBgContrastLoss      —— 目标-背景对比损失 L_tb
-  4. RAALoss                   —— 三种损失的加权组合
+
+以及将三者加权合并的包装类：
+  RAALoss —— 总 RAA 辅助损失 = λ_att·L_att + λ_consistency·L_consistency + λ_contrast·L_tb
 """
 
 import torch

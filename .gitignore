@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# PyTorch / ML artifacts
+*.pt
+*.pth
+*.onnx
+*.torchscript
+
+# Training outputs
+runs/
+wandb/
+
+# Data
+*.zip
+*.tar.gz
+datasets/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
