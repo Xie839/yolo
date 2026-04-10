@@ -1,0 +1,61 @@
+# YOLOv5 + RAA Module Configuration
+# ===================================
+# 区域自适应感知模块（RAA）超参数配置
+
+# ---- RAA 模块开关 --------------------------------------------------------
+raa_enabled: true            # 是否启用 RAA 模块
+
+# ---- 模块结构参数 --------------------------------------------------------
+raa:
+  # P3/P4/P5 三个尺度对应的特征图输入通道数
+  # YOLOv5s: [128, 256, 512]
+  # YOLOv5m: [192, 384, 768]
+  # YOLOv5l: [256, 512, 1024]
+  # YOLOv5x: [320, 640, 1280]
+  in_channels:
+    - 128    # P3 通道数（YOLOv5s 默认值）
+    - 256    # P4 通道数
+    - 512    # P5 通道数
+
+  expand_ratio: 0.5    # 背景外扩比例 ρ，目标框向外扩大 ρ 倍作为背景区域
+  epsilon: 1.0e-6      # 掩码区域池化防零常数
+  proj_dim: 128        # 投影后的统一特征维度（用于跨尺度一致性比较）
+
+# ---- 损失权重 ------------------------------------------------------------
+raa_loss:
+  lambda_att:          0.5    # 注意力监督损失权重
+  lambda_consistency:  1.0    # 多尺度一致性损失权重
+  lambda_contrast:     1.5    # 目标-背景对比损失权重
+  margin:              1.0    # 对比损失分离间隔 m
+
+# ---- 训练超参数（与 YOLOv5 hyp.scratch.yaml 合并使用） ------------------
+# 以下为推荐的基础超参数；完整超参数请参考 data/hyps/hyp.scratch-low.yaml
+lr0:     0.01       # 初始学习率
+lrf:     0.01       # 最终学习率 = lr0 * lrf
+momentum: 0.937
+weight_decay: 5.0e-4
+warmup_epochs: 3.0
+warmup_momentum: 0.8
+warmup_bias_lr: 0.1
+box: 0.05           # box loss 权重
+obj: 1.0            # obj loss 权重
+cls: 0.5            # cls loss 权重
+cls_pw: 1.0
+obj_pw: 1.0
+iou_t: 0.20
+anchor_t: 4.0
+# augmentation
+fl_gamma: 0.0
+hsv_h: 0.015
+hsv_s: 0.7
+hsv_v: 0.4
+degrees: 0.0
+translate: 0.1
+scale: 0.5
+shear: 0.0
+perspective: 0.0
+flipud: 0.0
+fliplr: 0.5
+mosaic: 1.0
+mixup: 0.0
+copy_paste: 0.0
